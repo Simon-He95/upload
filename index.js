@@ -65,7 +65,8 @@ upload.addEventListener('click', function () {
   fileReader.readAsArrayBuffer(_file)
   fileReader.onload = function (e) {
     let buffer = e.target.result // buffer编码
-    const spark = SparkMD5.ArrayBuffer()
+    console.log(buffer)
+    const spark = new SparkMD5.ArrayBuffer()
     spark.append(buffer)
     const HASH = spark.end()
     const suffix = /\.([a-zA-Z0-9]+)$/.exec(_file.name)[1]
@@ -76,60 +77,60 @@ upload.addEventListener('click', function () {
   // 获取文件 HASH 和 suffix ,通过const spark = SparkMD5.ArrayBuffer(); spark.append(buffer);const HASH = spark.end()
   // 后台根据hash生成一个hash目录存放切片内容,最终合并成一个文件,将之前hash目录删除
   // 实现切片处理 [固定切片大小 & 数量]
-  let max = 1024 * 100 // 100kb
-  let count = Math.ceil(_file.size / max)
-  let index = 0
-  const chunks = []
-  if (count > 100) { // 如果切片的数量大于100,可以固定切片的数量为100,来调整每一个切片的大小
-    count = 100
-    max = _file.size / count
-  }
-  while (index < count) {
-    chunks.push({
-      file: _file.slice(index * max, (index + 1) * max), //一:0 ~ max;二:max ~ 2 * max ...
-      filename: `${HASH}_${index + 1}.${suffix}`
-    })
-    index++
-  }
+  // let max = 1024 * 100 // 100kb
+  // let count = Math.ceil(_file.size / max)
+  // let index = 0
+  // const chunks = []
+  // if (count > 100) { // 如果切片的数量大于100,可以固定切片的数量为100,来调整每一个切片的大小
+  //   count = 100
+  //   max = _file.size / count
+  // }
+  // while (index < count) {
+  //   chunks.push({
+  //     file: _file.slice(index * max, (index + 1) * max), //一:0 ~ max;二:max ~ 2 * max ...
+  //     filename: `${HASH}_${index + 1}.${suffix}`
+  //   })
+  //   index++
+  // }
 
-  index = 0
-  const complete = () => {
-    // 每一次上传成功后都调用,可以控制完成进度条,当所有切片上传完成后,可以发送服务器合并切片的请求
-    index++
+  // index = 0
+  // const complete = () => {
+  //   // 每一次上传成功后都调用,可以控制完成进度条,当所有切片上传完成后,可以发送服务器合并切片的请求
+  //   index++
 
-    if (index >= count) {
-      // 所有切片上传成功
-      // 发起切片合并请求
-      fetch('/merge_upload', { HASH, count }, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }).then(res => {
-        res => res.json()
-      }).then(res => {
-        // 合并成功
-      }).catch(err => {
-        // 合并失败
-      })
-    }
-  }
+  //   if (index >= count) {
+  //     // 所有切片上传成功
+  //     // 发起切片合并请求
+  //     fetch('/merge_upload', { HASH, count }, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }).then(res => {
+  //       res => res.json()
+  //     }).then(res => {
+  //       // 合并成功
+  //     }).catch(err => {
+  //       // 合并失败
+  //     })
+  //   }
+  // }
 
-  const already = []
+  // const already = []
 
 
-  chunks.forEach(chunk => {
-    // 发送请求
-    // 已上传成功无需再上传,断点续传,中途断网,重新上传,已上传的切片不再上传
-    if (already.length > 0 && already.indexOf(chunk.filename) > -1) {
-      complete()
-      return
-    }
-    let form = new FormData()
-    form.append('file', chunk.file)
-    form.append('filename', chunk.filename)
-    fetch('/upload', form).then(res => res.json()).then(res => {
-      if (+data.code === 0) {
-        already.push(filename)
-        complete()
-      }
-    }).catch(err => {
-      // 当前切片上传失败,请稍后再试
-    })
-  })
+  // chunks.forEach(chunk => {
+  //   // 发送请求
+  //   // 已上传成功无需再上传,断点续传,中途断网,重新上传,已上传的切片不再上传
+  //   if (already.length > 0 && already.indexOf(chunk.filename) > -1) {
+  //     complete()
+  //     return
+  //   }
+  //   let form = new FormData()
+  //   form.append('file', chunk.file)
+  //   form.append('filename', chunk.filename)
+  //   fetch('/upload', form).then(res => res.json()).then(res => {
+  //     if (+data.code === 0) {
+  //       already.push(filename)
+  //       complete()
+  //     }
+  //   }).catch(err => {
+  //     // 当前切片上传失败,请稍后再试
+  //   })
+  // })
 })
